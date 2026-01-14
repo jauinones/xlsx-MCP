@@ -29,7 +29,7 @@ This ensures mathematical accuracy for:
 - **400+ Excel Functions** - SUM, AVERAGE, VLOOKUP, IF, and more via HyperFormula
 - **Multi-Workbook** - Open and manipulate multiple workbooks simultaneously
 
-## Tools (20 total)
+## Tools (21 total)
 
 ### Workbook Management
 | Tool | Description |
@@ -70,6 +70,11 @@ This ensures mathematical accuracy for:
 | `create_chart` | Create bar, line, pie, or scatter chart |
 | `delete_chart` | Remove chart |
 | `create_pivot_table` | Create pivot table from data |
+
+### Import
+| Tool | Description |
+|------|-------------|
+| `import_markdown_table` | Import markdown table to Excel |
 
 ## Installation
 

@@ -4,11 +4,11 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 ## Project Overview
 
-This is a Model Context Protocol (MCP) server for Excel file manipulation. It provides 20 tools for working with Excel workbooks without needing Microsoft Excel installed.
+This is a Model Context Protocol (MCP) server for Excel file manipulation. It provides 21 tools for working with Excel workbooks without needing Microsoft Excel installed.
 
 **Key Feature**: Integrates [HyperFormula](https://hyperformula.handsontable.com/) for real-time formula calculation. Formulas like `=SUM(A1:A10)` are evaluated immediately, returning calculated results to agents.
 
-## Tools Available (20 total)
+## Tools Available (21 total)
 
 ### Workbook Management
 - `create_workbook` - Create new workbook in memory, returns workbook ID
@@ -41,6 +41,9 @@ This is a Model Context Protocol (MCP) server for Excel file manipulation. It pr
 
 ### Pivot Tables
 - `create_pivot_table` - Create pivot table from data range
+
+### Import
+- `import_markdown_table` - Import markdown table into Excel workbook
 
 ## Formula Calculation Engine
 

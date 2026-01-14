@@ -399,6 +399,30 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
 
+      // Import
+      {
+        name: "import_markdown_table",
+        description: "Import a markdown table into an Excel workbook. Creates a new workbook or uses existing one.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            markdown: {
+              type: "string",
+              description: "The markdown table string to import (with | delimiters)",
+            },
+            workbookId: {
+              type: "string",
+              description: "Optional workbook ID to import into. Creates new workbook if not provided.",
+            },
+            sheetName: {
+              type: "string",
+              description: "Optional sheet name for the imported data (defaults to 'Sheet1')",
+            },
+          },
+          required: ["markdown"],
+        },
+      },
+
       // Pivot Tables
       {
         name: "create_pivot_table",
@@ -660,6 +684,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         });
         return {
           content: [{ type: "text", text: JSON.stringify({ created: true, ...result }) }],
+        };
+      }
+
+      // Import
+      case "import_markdown_table": {
+        const { markdown, workbookId, sheetName } = args as {
+          markdown: string;
+          workbookId?: string;
+          sheetName?: string;
+        };
+        const result = excelClient.importMarkdownTable(markdown, workbookId, sheetName);
+        return {
+          content: [{ type: "text", text: JSON.stringify({ imported: true, ...result }) }],
         };
       }
 

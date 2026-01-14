@@ -557,6 +557,118 @@ export class ExcelClient {
     };
   }
 
+  // Markdown Import
+
+  importMarkdownTable(
+    markdown: string,
+    workbookId?: string,
+    sheetName?: string
+  ): { workbookId: string; sheet: string; rowCount: number; columnCount: number } {
+    // Parse markdown table
+    const lines = markdown.split("\n").filter(line => line.trim().length > 0);
+
+    // Find table lines (lines containing |)
+    const tableLines = lines.filter(line => line.includes("|"));
+
+    if (tableLines.length < 2) {
+      throw new Error("No valid markdown table found. Expected at least header and separator rows.");
+    }
+
+    // Parse headers (first row)
+    const headers = this.parseMarkdownRow(tableLines[0]);
+
+    // Skip separator row (second row with dashes), parse data rows
+    const dataRows: string[][] = [];
+    for (let i = 1; i < tableLines.length; i++) {
+      const row = tableLines[i];
+      // Skip separator rows (contain only |, -, :, and spaces)
+      if (/^[\s|:\-]+$/.test(row)) continue;
+      dataRows.push(this.parseMarkdownRow(row));
+    }
+
+    // Create or get workbook
+    let wbId: string;
+    let entry: WorkbookEntry;
+
+    if (workbookId) {
+      wbId = workbookId;
+      entry = this.getWorkbookEntry(workbookId);
+    } else {
+      wbId = this.createWorkbook();
+      entry = this.getWorkbookEntry(wbId);
+    }
+
+    // Create or get sheet
+    const targetSheetName = sheetName || "Imported";
+    let sheet: ExcelJS.Worksheet;
+
+    try {
+      sheet = entry.workbook.addWorksheet(targetSheetName);
+      entry.hf.addSheet(targetSheetName);
+    } catch {
+      sheet = this.getSheet(entry.workbook, targetSheetName);
+    }
+
+    // Write headers to row 1
+    const hfSheetId = entry.hf.getSheetId(targetSheetName);
+    for (let col = 0; col < headers.length; col++) {
+      sheet.getCell(1, col + 1).value = headers[col];
+      if (hfSheetId !== undefined) {
+        entry.hf.setCellContents({ sheet: hfSheetId, row: 0, col }, headers[col]);
+      }
+    }
+
+    // Write data rows starting at row 2
+    for (let rowIdx = 0; rowIdx < dataRows.length; rowIdx++) {
+      const rowData = dataRows[rowIdx];
+      for (let col = 0; col < rowData.length; col++) {
+        const cellValue = this.parseMarkdownCellValue(rowData[col]);
+        sheet.getCell(rowIdx + 2, col + 1).value = cellValue;
+        if (hfSheetId !== undefined) {
+          entry.hf.setCellContents({ sheet: hfSheetId, row: rowIdx + 1, col }, cellValue as RawCellContent);
+        }
+      }
+    }
+
+    return {
+      workbookId: wbId,
+      sheet: targetSheetName,
+      rowCount: dataRows.length + 1, // +1 for header
+      columnCount: headers.length,
+    };
+  }
+
+  private parseMarkdownRow(row: string): string[] {
+    // Remove leading/trailing pipes and split by |
+    return row
+      .replace(/^\|/, "")
+      .replace(/\|$/, "")
+      .split("|")
+      .map(cell => cell.trim());
+  }
+
+  private parseMarkdownCellValue(value: string): string | number | boolean | null {
+    const trimmed = value.trim();
+
+    // Empty or null
+    if (trimmed === "" || trimmed.toLowerCase() === "null") {
+      return null;
+    }
+
+    // Boolean
+    if (trimmed.toLowerCase() === "true") return true;
+    if (trimmed.toLowerCase() === "false") return false;
+
+    // Number (including decimals and negatives)
+    const num = Number(trimmed);
+    if (!isNaN(num) && trimmed !== "") {
+      return num;
+    }
+
+    // Default to string
+    return trimmed;
+  }
+
   // Helper Methods
 
   private syncSheetToHyperFormula(sheet: ExcelJS.Worksheet, hf: HyperFormula, sheetName: string): void {
